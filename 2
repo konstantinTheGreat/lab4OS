@@ -1,0 +1,56 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MAX_BUFFER_SIZE 1000
+
+char* processInput() {
+    char buffer[MAX_BUFFER_SIZE];
+    char separator[] = "* * * * * * * * * * * * * * * * * * * *\n";
+    char *accumulatedBuffer = NULL;
+    size_t accumulatedBufferSize = 0;
+
+    FILE *uptimeStream;
+
+    while (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+        size_t lineLength = strlen(buffer);
+
+        // Dynamically allocate memory to store the accumulated lines
+        accumulatedBuffer = realloc(accumulatedBuffer, accumulatedBufferSize + lineLength + 1);
+
+        if (accumulatedBuffer == NULL) {
+            perror("Error allocating memory");
+            exit(EXIT_FAILURE);
+        }
+
+        // Copy the current line to the accumulated buffer
+        strcpy(accumulatedBuffer + accumulatedBufferSize, buffer);
+
+        // Update the accumulated buffer size
+        accumulatedBufferSize += lineLength;
+    }
+
+    // Append the separator and the output of the 'uptime' command
+    strcat(accumulatedBuffer, separator);
+    uptimeStream = popen("uptime", "r");
+
+    if (fgets(buffer, sizeof(buffer), uptimeStream) != NULL) {
+        strcat(accumulatedBuffer, buffer);
+    }
+
+    pclose(uptimeStream);
+
+    return accumulatedBuffer;
+}
+
+int main() {
+    char *result = processInput();
+
+    // Print or use the final accumulated buffer
+    printf("%s", result);
+
+    // Free dynamically allocated memory
+    free(result);
+
+    return EXIT_SUCCESS;
+}
